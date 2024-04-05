@@ -57,21 +57,24 @@ type tripleGroupReportJSON struct {
 // the report content to stdout as JSON
 // if outputDest flag is provided, output results to a file.
 func (jr JsonReporter) Print(reports []Report) error {
-	report, err := createJsonReport(reports)
+    report, err := createJsonReport(reports)
+    if err != nil {
+        return err
+    }
 
-	jsonBytes, err := json.MarshalIndent(report, "", "  ")
-	if err != nil {
-		return err
-	}
+    jsonBytes, err := json.MarshalIndent(report, "", "  ")
+    if err != nil {
+        return err
+    }
 
-	jsonBytes = append(jsonBytes, '\n')
-	fmt.Print(string(jsonBytes))
+    jsonBytes = append(jsonBytes, '\n')
+    fmt.Print(string(jsonBytes))
 
-	if jr.outputDest != "" {
-		return outputBytesToFile(jr.outputDest, "result", "json", jsonBytes)
-	}
+    if jr.outputDest != "" {
+        return outputBytesToFile(jr.outputDest, "result", "json", jsonBytes)
+    }
 
-	return nil
+    return nil
 }
 
 // Prints the report for when one group is passed in the groupby flag
