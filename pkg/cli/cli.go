@@ -77,33 +77,45 @@ func Init(opts ...CLIOption) *CLI {
 // - Calls the Validate method from the Validator interface to validate the file
 // - Outputs the results using the Reporter
 func (c CLI) Run() (int, error) {
-	errorFound := false
-	var reports []reporter.Report
-	foundFiles, err := c.Finder.Find()
+    var (
+        errorFound bool
+        reports    []reporter.Report
+    )
 
-	if err != nil {
-		return 1, fmt.Errorf("Unable to find files: %v", err)
-	}
+    foundFiles, err := c.Finder.Find()
+    if err != nil {
+        return 1, fmt.Errorf("Unable to find files: %v", err)
+    }
 
-	for _, fileToValidate := range foundFiles {
-		// read it
-		fileContent, err := os.ReadFile(fileToValidate.Path)
-		if err != nil {
-			return 1, fmt.Errorf("unable to read file: %v", err)
-		}
+    for _, fileToValidate := range foundFiles {
+        fileContent, err := os.ReadFile(fileToValidate.Path)
+        if err != nil {
+            return 1, fmt.Errorf("unable to read file: %v", err)
+        }
 
-		isValid, err := fileToValidate.FileType.Validator.Validate(fileContent)
-		if !isValid {
-			errorFound = true
-		}
-		report := reporter.Report{
-			FileName:        fileToValidate.Name,
-			FilePath:        fileToValidate.Path,
-			IsValid:         isValid,
-			ValidationError: err,
-		}
-		reports = append(reports, report)
-	}
+        isValid, err := fileToValidate.FileType.Validator.Validate(fileContent)
+        if !isValid {
+            errorFound = true
+        }
+
+        reports = append(reports, reporter.Report{
+            FileName:        fileToValidate.Name,
+            FilePath:        fileToValidate.Path,
+            IsValid:         isValid,
+            ValidationError: err,
+        })
+    }
+
+    return processResults(errorFound, reports)
+}
+
+func processResults(errorFound bool, reports []reporter.Report) (int, error) {
+    if errorFound {
+        return 1, fmt.Errorf("Validation error(s) occurred")
+    }
+    return 0, nil
+}
+
 
 	// Group the output if the user specified a group by option
 	// Length is equal to one when empty as it contains an empty string
